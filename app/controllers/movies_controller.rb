@@ -40,14 +40,16 @@ class MoviesController < ApplicationController
       reload_page = true
       
     else
-      session[:ratings] = @ratings_to_show.keys
+      if(@ratings_to_show.kind_of?(Hash))
+        @ratings_to_show = @ratings_to_show.keys
+      end
+      session[:ratings] = @ratings_to_show
     end
     
     #call the sort def to set appropriate movie path
     sort()
     
     #part 3
-    
     if reload_page
       flash.keep 
       redirect_to movies_path(:sort_by => @sort_method, :ratings => @ratings_to_show)
