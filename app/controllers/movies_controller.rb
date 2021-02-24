@@ -8,6 +8,64 @@ class MoviesController < ApplicationController
 
   def index
     @movies = Movie.all
+    @all_ratings = Movie.all_ratings
+    @self_ratings = Movie.with_ratings
+    
+    #should it reload the page
+    reload_page = false
+    
+    #how to sort the movies based on user selection
+    #get the requested sort method from the URI route
+    @sort_method = params[:sort_by] #params are provided by user
+    if(@sort_method == nil) 
+        @sort_method = session[:sort_by] #if no sort method pull session parameter
+        if (@sort_method == nil) #if still nill then set to default title sort
+          session[:sort_by] = "title"
+        end
+        
+      reload_page = true
+    else
+      session[:sort_by] = @sort_method 
+    end
+    
+    #what movies to upload based on ratings to show
+    @ratings_to_show = params[:ratings] #get the requested filter from the URI route
+    
+      #Caveat for user previous session
+    if(@ratings_to_show == nil || @ratings_to_show.empty?) #if empty or nill
+      @ratings_to_show = session[:ratings] #set to previous session 
+      if (@ratings_to_show == nil) # if session is empty the set to all movies defualt
+        session[:ratings] = @all_ratings
+      end
+      reload_page = true
+      
+    else
+      session[:ratings] = @ratings_to_show.keys
+    end
+    
+    #call the sort def to set appropriate movie path
+    sort()
+    
+    #part 3
+    
+    if reload_page
+      flash.keep 
+      redirect_to movies_path(:sort_by => @sort_method, :ratings => @ratings_to_show)
+    end
+    
+  end
+  
+  
+  def sort
+    if@sort_method == "title"
+      @title_header = 'hilite'
+      @movies = Movie.where(rating: [@ratings_to_show]).order("title ASC")
+    elsif @sort_method == "release_date_sort"
+      @release_header ='hilite'
+      @movies = Movie.where(rating: [@ratings_to_show]).order("release_date ASC")
+    else
+      @movies = Movie.all
+    end
   end
 
   def new
